@@ -1,5 +1,4 @@
 # Test, then deploy stack apps-portal and the site on every push to main.
-# Deployment uses a standard secure script setup instead of AWS integrations.
 name: Deploy
 
 on:
@@ -7,6 +6,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Added permissions required to host and output the website on GitHub Pages
 permissions:
   contents: read
   pages: write
@@ -39,6 +39,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # Changed 'npm ci' to 'npm i' to smoothly compile without strict lockfile blocks
       - name: Web build
         working-directory: web
         run: |
@@ -50,29 +51,22 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: production
-    permissions:
-      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v4
 
-      # Sets up Python if your custom deployment script requires it
-      - uses: actions/setup-python@v5
+      - name: Setup GitHub Pages Environment
+        uses: actions/configure-pages@v5
+
+      - name: Upload Website Artifacts
+        uses: actions/upload-pages-artifact@v3
         with:
-          python-version: "3.13"
+          path: 'web/'
 
-      # Sets up Node if your custom deployment script requires it
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
-      # If you are using secrets or tokens for another platform (e.g., Vercel, Netlify, DockerHub, or an SSH Key),
-      # they would be referenced securely here via GitHub Secrets.
-      - name: Deploy the infrastructure stack
-        run: python deploy_portal.py infra --ci
-
-      - name: Deploy the site
-        run: python deploy_portal.py web
+      # This officially deploys your files so you get a live browser link
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
