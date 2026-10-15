@@ -21,7 +21,7 @@ def main():
         print("[INFO] Running in CI mode mode.")
 
     if args.target == "infra":
-        if args.cfn-role-arn:
+        if args.cfn_role_arn:
             print(f"[AWS MODE] Deploying infrastructure stack using role: {args.cfn_role_arn}")
             # Insert AWS CloudFormation/Boto3 logic here if deploying to AWS
         else:
